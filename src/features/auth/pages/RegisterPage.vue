@@ -27,12 +27,17 @@ async function submit() {
 
 <template>
   <form class="space-y-4" @submit.prevent="submit">
-    <label class="block text-xs font-bold uppercase text-slate-700">
-      Nama Lengkap
-      <span
-        class="mt-1 flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 font-normal normal-case"
+    <div>
+      <label
+        for="register-name-input"
+        class="block text-xs font-bold uppercase text-slate-700"
       >
-        <User :size="16" class="text-slate-600" />
+        Nama Lengkap
+      </label>
+      <span
+        class="mt-1 flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5"
+      >
+        <User :size="16" class="text-slate-600" aria-hidden="true" />
         <input
           id="register-name-input"
           type="text"
@@ -43,13 +48,19 @@ async function submit() {
           @input="onName"
         />
       </span>
-    </label>
-    <label class="block text-xs font-bold uppercase text-slate-700">
-      Alamat Email
-      <span
-        class="mt-1 flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 font-normal normal-case"
+    </div>
+
+    <div>
+      <label
+        for="register-email-input"
+        class="block text-xs font-bold uppercase text-slate-700"
       >
-        <Mail :size="16" class="text-slate-600" />
+        Alamat Email
+      </label>
+      <span
+        class="mt-1 flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5"
+      >
+        <Mail :size="16" class="text-slate-600" aria-hidden="true" />
         <input
           id="register-email-input"
           type="email"
@@ -60,13 +71,19 @@ async function submit() {
           @input="onEmail"
         />
       </span>
-    </label>
-    <label class="block text-xs font-bold uppercase text-slate-700">
-      Kata Sandi
-      <span
-        class="mt-1 flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 font-normal normal-case"
+    </div>
+
+    <div>
+      <label
+        for="register-password-input"
+        class="block text-xs font-bold uppercase text-slate-700"
       >
-        <Lock :size="16" class="text-slate-600" />
+        Kata Sandi
+      </label>
+      <span
+        class="mt-1 flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5"
+      >
+        <Lock :size="16" class="text-slate-600" aria-hidden="true" />
         <input
           id="register-password-input"
           type="password"
@@ -77,14 +94,15 @@ async function submit() {
           @input="onPassword"
         />
       </span>
-    </label>
+    </div>
+
     <button
       id="register-submit-button"
       type="submit"
       :disabled="auth.isAuthRegister"
       class="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
     >
-      <UserPlus :size="16" />
+      <UserPlus :size="16" aria-hidden="true" />
       {{ auth.isAuthRegister ? "Memproses..." : "Daftar Sekarang" }}
     </button>
   </form>
