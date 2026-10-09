@@ -2,7 +2,6 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 
-// Mock store
 const mockAddAucation = vi.fn(() => Promise.resolve(true));
 vi.mock("../states/aucationsStore.js", () => ({
   useAucationsStore: () => ({
@@ -11,13 +10,11 @@ vi.mock("../states/aucationsStore.js", () => ({
   }),
 }));
 
-// Mock tools
 vi.mock("../../../helpers/toolsHelper.js", () => ({
   showWarningDialog: vi.fn(() => Promise.resolve()),
   toApiDate: vi.fn((v) => v),
 }));
 
-// Mock MarkdownEditor (biar tidak perlu load @toast-ui)
 vi.mock("../components/MarkdownEditor.vue", () => ({
   default: {
     name: "MarkdownEditor",
@@ -33,6 +30,7 @@ describe("AddModal", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    mockAddAucation.mockResolvedValue(true);
   });
 
   it("renders form inputs", () => {
@@ -77,5 +75,36 @@ describe("AddModal", () => {
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
     expect(wrapper.emitted()).toHaveProperty("done");
+  });
+
+  it("does not emit done when addAucation returns false", async () => {
+    mockAddAucation.mockResolvedValueOnce(false);
+    const wrapper = mount(AddModal, {
+      global: { stubs: { ModalShell: { template: "<div><slot /></div>" } } },
+    });
+    await wrapper.find('[data-testid="add-title"]').setValue("Barang Test");
+    await wrapper.find('[data-testid="add-start-bid"]').setValue("100000");
+    await wrapper.find('[data-testid="add-closed-at"]').setValue("2026-12-31T10:00");
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+    expect(wrapper.emitted("done")).toBeUndefined();
+  });
+
+  it("updates title input value on typing", async () => {
+    const wrapper = mount(AddModal, {
+      global: { stubs: { ModalShell: { template: "<div><slot /></div>" } } },
+    });
+    const input = wrapper.find('[data-testid="add-title"]');
+    await input.setValue("Barang Baru");
+    expect(input.element.value).toBe("Barang Baru");
+  });
+
+  it("updates start bid input value on typing", async () => {
+    const wrapper = mount(AddModal, {
+      global: { stubs: { ModalShell: { template: "<div><slot /></div>" } } },
+    });
+    const input = wrapper.find('[data-testid="add-start-bid"]');
+    await input.setValue("500000");
+    expect(input.element.value).toBe("500000");
   });
 });

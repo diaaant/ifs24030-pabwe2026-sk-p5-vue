@@ -1,18 +1,20 @@
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 
-// Mock stores
+const mockFetchProfile = vi.fn(() => Promise.resolve(true));
+const mockLogout = vi.fn();
+
 vi.mock("../../users/states/usersStore.js", () => ({
   useUsersStore: () => ({
-    fetchProfile: vi.fn(() => Promise.resolve(true)),
+    fetchProfile: mockFetchProfile,
   }),
 }));
 
 vi.mock("../../auth/states/authStore.js", () => ({
   useAuthStore: () => ({
-    logout: vi.fn(),
+    logout: mockLogout,
   }),
 }));
 
@@ -29,9 +31,11 @@ const router = createRouter({
 describe("AucationLayout", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
+    mockFetchProfile.mockResolvedValue(true);
   });
 
-  it("renders layout structure", () => {
+  it("renders layout structure and calls fetchProfile on mount", async () => {
     const wrapper = mount(AucationLayout, {
       global: {
         plugins: [router],
@@ -42,7 +46,9 @@ describe("AucationLayout", () => {
         },
       },
     });
+    await flushPromises();
     expect(wrapper.exists()).toBe(true);
+    expect(mockFetchProfile).toHaveBeenCalled();
   });
 
   it("toggles sidebar when navbar emits toggle-sidebar", async () => {
@@ -51,14 +57,36 @@ describe("AucationLayout", () => {
         plugins: [router],
         stubs: {
           NavbarComponent: {
-            template: '<button data-testid="nav-toggle" @click="$emit(\'toggle-sidebar\')">Toggle</button>',
+            template:
+              '<button data-testid="nav-toggle" @click="$emit(\'toggle-sidebar\')">Toggle</button>',
           },
+          SidebarComponent: {
+            template: '<div data-testid="sidebar" :data-open="open"></div>',
+            props: ["open"],
+          },
+          RouterView: true,
+        },
+      },
+    });
+    await flushPromises();
+    await wrapper.find('[data-testid="nav-toggle"]').trigger("click");
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it("handles fetchProfile returning false — logs out and redirects to login", async () => {
+    mockFetchProfile.mockResolvedValueOnce(false);
+    const wrapper = mount(AucationLayout, {
+      global: {
+        plugins: [router],
+        stubs: {
+          NavbarComponent: true,
           SidebarComponent: true,
           RouterView: true,
         },
       },
     });
-    await wrapper.find('[data-testid="nav-toggle"]').trigger("click");
-    expect(wrapper.exists()).toBe(true);
+    await flushPromises();
+    expect(mockFetchProfile).toHaveBeenCalled();
+    expect(mockLogout).toHaveBeenCalled();
   });
 });

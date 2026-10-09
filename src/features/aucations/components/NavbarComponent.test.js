@@ -1,18 +1,19 @@
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 
-// Mock store
+const mockLogout = vi.fn();
+
 vi.mock("../../users/states/usersStore.js", () => ({
   useUsersStore: () => ({
-    profile: { name: "Dian Test", email: "dian@test.com" },
+    profile: { name: "Dian Test", email: "dian@test.com", photo: null },
   }),
 }));
 
 vi.mock("../../auth/states/authStore.js", () => ({
   useAuthStore: () => ({
-    logout: vi.fn(),
+    logout: mockLogout,
   }),
 }));
 
@@ -21,6 +22,7 @@ vi.mock("../../../helpers/toolsHelper.js", () => ({
 }));
 
 import NavbarComponent from "./NavbarComponent.vue";
+import { showConfirmDialog } from "../../../helpers/toolsHelper.js";
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -33,6 +35,8 @@ const router = createRouter({
 describe("NavbarComponent", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
+    showConfirmDialog.mockResolvedValue(false);
   });
 
   it("renders app title", () => {
@@ -64,5 +68,27 @@ describe("NavbarComponent", () => {
     const avatar = wrapper.find('[data-testid="avatar"]');
     expect(avatar.exists()).toBe(true);
     expect(avatar.text()).toBe("D");
+  });
+
+  it("does not logout when user cancels confirm dialog", async () => {
+    showConfirmDialog.mockResolvedValueOnce(false);
+    const wrapper = mount(NavbarComponent, {
+      global: { plugins: [router] },
+    });
+    await wrapper.find('[data-testid="btn-logout"]').trigger("click");
+    await flushPromises();
+    expect(showConfirmDialog).toHaveBeenCalledWith("Yakin ingin keluar?");
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("calls logout and redirects when user confirms", async () => {
+    showConfirmDialog.mockResolvedValueOnce(true);
+    const wrapper = mount(NavbarComponent, {
+      global: { plugins: [router] },
+    });
+    await wrapper.find('[data-testid="btn-logout"]').trigger("click");
+    await flushPromises();
+    expect(showConfirmDialog).toHaveBeenCalledWith("Yakin ingin keluar?");
+    expect(mockLogout).toHaveBeenCalled();
   });
 });
